@@ -21,7 +21,6 @@ import feign.Client
 import feign.Feign
 import feign.Request
 import feign.Response
-import feign.jaxrs2.JAXRS2Contract
 import spock.lang.Specification
 /**
  * Created by sskrla on 10/12/15.
@@ -31,7 +30,7 @@ class BeanParamTest extends Specification {
     def client = Feign.builder()
             .encoder(new BeanParamEncoder())
             .invocationHandlerFactory(new BeanParamInvocationHandlerFactory())
-            .contract(new JAXRS2Contract())
+            .contract(new EncoderJAXRS3Contract())
             .client(new Client() {
                 @Override
                 Response execute(Request request, Request.Options options) throws IOException {
@@ -43,13 +42,13 @@ class BeanParamTest extends Specification {
 
     def "query params"() {
         when:
-        client.withParam(new QueryResource.QueryParamBean(param1: "one", param2: "two"))
+        client.withParam(new QueryResource.QueryParamBean(param1: "one", param2: "two", param3: "three"))
 
         then:
-        sent.url() == "http://localhost/?one=one&two=two"
+        sent.url() == "http://localhost/?one=one&two=two&three=three"
     }
 
-    def "null param not sent"() {
+    def "last null query param not sent"() {
         when:
         client.withParam(new QueryResource.QueryParamBean(param1: "one"))
 
@@ -57,21 +56,48 @@ class BeanParamTest extends Specification {
         sent.url() == "http://localhost/?one=one"
     }
 
+    def "middle null query param not sent"() {
+        when:
+        client.withParam(new QueryResource.QueryParamBean(param1: "one", param3: "three"))
+
+        then:
+        sent.url() == "http://localhost/?one=one&three=three"
+    }
+
+    def "first null query param not sent"() {
+        when:
+        client.withParam(new QueryResource.QueryParamBean(param3: "three"))
+
+        then:
+        sent.url() == "http://localhost/?three=three"
+    }
+
     def "header param"() {
         when:
-        client.withHeader(new QueryResource.HeaderBeanParam(testParam: "ing"))
+        client.withHeader(new QueryResource.HeaderBeanParam(testParam1: "ing", testParam2: "ing2"))
 
         then:
         sent.url() == "http://localhost/headers"
-        sent.headers().get("test")[0] == "ing"
+        sent.headers().get("test1")[0] == "ing"
+        sent.headers().get("test2")[0] == "ing2"
+    }
+
+    def "first null header param not sent"() {
+        when:
+        client.withHeader(new QueryResource.HeaderBeanParam(testParam2: "ing2"))
+
+        then:
+        sent.url() == "http://localhost/headers"
+        sent.headers().get("test1") == null
+        sent.headers().get("test2")[0] == "ing2"
     }
 
     def "path param"() {
         when:
-        client.withPath(new QueryResource.PathBeanParam(id: 42))
+        client.withPath(new QueryResource.PathBeanParam(id1: 42, id2: 123))
 
         then:
-        sent.url() == "http://localhost/42"
+        sent.url() == "http://localhost/42/123"
     }
 
     def "mixed param"() {

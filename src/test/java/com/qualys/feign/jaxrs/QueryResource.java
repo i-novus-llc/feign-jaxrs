@@ -18,7 +18,9 @@
 
 package com.qualys.feign.jaxrs;
 
-import javax.ws.rs.*;
+import jakarta.ws.rs.*;
+
+import java.util.Map;
 
 /**
  * Created by sskrla on 10/12/15.
@@ -26,13 +28,14 @@ import javax.ws.rs.*;
 public interface QueryResource {
     @GET String withParam(@BeanParam QueryParamBean bean);
     @GET @Path("headers") String withHeader(@BeanParam HeaderBeanParam bean);
-    @GET @Path("{id}") String withPath(@BeanParam PathBeanParam path);
+    @GET @Path("{id1}/{id2}") String withPath(@BeanParam PathBeanParam path);
     @GET @Path("path1/{id1}/path2/{id2}") String withMixed(@PathParam("id1") int id, @QueryParam("param1") String param,
                                                            @HeaderParam("header1") String header, @BeanParam MixedBeanParam bean);
 
     class QueryParamBean {
         @QueryParam("one") String param1;
         @QueryParam("two") String param2;
+        @QueryParam("three") String param3;
 
         public String getParam1() {
             return param1;
@@ -49,29 +52,57 @@ public interface QueryResource {
         public void setParam2(String param2) {
             this.param2 = param2;
         }
+
+        public String getParam3() {
+            return param3;
+        }
+
+        public void setParam3(String param3) {
+            this.param3 = param3;
+        }
     }
 
     class HeaderBeanParam {
-        @HeaderParam("test") String testParam;
+        @HeaderParam("test1") String testParam1;
 
-        public String getTestParam() {
-            return testParam;
+        @HeaderParam("test2") String testParam2;
+
+        public String getTestParam1() {
+            return testParam1;
         }
 
-        public void setTestParam(String testParam) {
-            this.testParam = testParam;
+        public void setTestParam1(String testParam1) {
+            this.testParam1 = testParam1;
+        }
+
+        public String getTestParam2() {
+            return testParam2;
+        }
+
+        public void setTestParam2(String testParam2) {
+            this.testParam2 = testParam2;
         }
     }
 
     class PathBeanParam {
-        @PathParam("id") int id;
+        @PathParam("id1") int id1;
 
-        public int getId() {
-            return id;
+        @PathParam("id2") int id2;
+
+        public int getId1() {
+            return id1;
         }
 
-        public void setId(int id) {
-            this.id = id;
+        public void setId1(int id1) {
+            this.id1 = id1;
+        }
+
+        public int getId2() {
+            return id2;
+        }
+
+        public void setId2(int id2) {
+            this.id2 = id2;
         }
     }
 

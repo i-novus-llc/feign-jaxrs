@@ -18,34 +18,32 @@
 
 package com.qualys.feign.jaxrs;
 
-import feign.Feign;
-import feign.InvocationHandlerFactory;
+import feign.*;
 import feign.codec.Encoder;
-import feign.jaxrs.JAXRSContract;
 
 /**
  * Created by sskrla on 10/13/15.
  */
-public class JAXRS2Profile extends Feign.Builder {
-    JAXRS2Profile() {
+public class JAXRS3Profile extends Feign.Builder {
+    JAXRS3Profile() {
         encoder(new Encoder.Default());
         invocationHandlerFactory(new InvocationHandlerFactory.Default());
-        contract(new JAXRSContract());
+        contract(new EncoderJAXRS3Contract());
     }
 
     @Override
-    public JAXRS2Profile encoder(Encoder encoder) {
+    public JAXRS3Profile encoder(Encoder encoder) {
         super.encoder(new BeanParamEncoder(encoder));
         return this;
     }
 
     @Override
-    public JAXRS2Profile invocationHandlerFactory(InvocationHandlerFactory factory) {
+    public JAXRS3Profile invocationHandlerFactory(InvocationHandlerFactory factory) {
         super.invocationHandlerFactory(new BeanParamInvocationHandlerFactory(factory));
         return this;
     }
 
-    public static JAXRS2Profile create() {
-        return new JAXRS2Profile();
+    public static JAXRS3Profile create() {
+        return new JAXRS3Profile();
     }
 }

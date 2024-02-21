@@ -21,7 +21,7 @@ package com.qualys.feign.jaxrs;
 import feign.InvocationHandlerFactory;
 import feign.Target;
 
-import javax.ws.rs.BeanParam;
+import jakarta.ws.rs.BeanParam;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -91,6 +91,7 @@ class BeanParamInvocationHandlerFactory implements InvocationHandlerFactory {
                     paramIndex,
                     transformer,
                     params);
+
             return delegate.invoke(argv);
         }
     }

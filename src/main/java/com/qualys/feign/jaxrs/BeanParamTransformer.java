@@ -21,9 +21,9 @@ package com.qualys.feign.jaxrs;
 import com.google.common.collect.Multimap;
 import feign.Param;
 
-import javax.ws.rs.FormParam;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.QueryParam;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;

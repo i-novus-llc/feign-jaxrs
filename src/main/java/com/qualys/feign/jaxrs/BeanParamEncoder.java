@@ -22,8 +22,10 @@ import feign.RequestTemplate;
 import feign.codec.EncodeException;
 import feign.codec.Encoder;
 import feign.template.*;
+
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -45,17 +47,10 @@ class BeanParamEncoder implements Encoder {
         if (template.methodMetadata().indexToExpander() == null)
             template.methodMetadata().indexToExpander(new HashMap<>());
 
-        if (object instanceof EncoderContext) {
-            EncoderContext ctx = (EncoderContext) object;
-            for (String name : ctx.transformer.queryParams()) {
-                template.query(name, "{" + name + "}");
-            }
-            for (String name : ctx.transformer.headerParams()) {
-                if (ctx.values.get(name) != null)
-                    template.header(name, String.valueOf(ctx.values.get(name)));
-            }
-
-            resolve(template, ctx.values);
+        if (object instanceof Object[] objects) {
+            for (Object internalObject : objects)
+                if (internalObject instanceof EncoderContext ctx)
+                    resolve(template, ctx);
         } else {
             this.delegate.encode(object, bodyType, template);
         }
@@ -63,14 +58,15 @@ class BeanParamEncoder implements Encoder {
 
     private static final Pattern ESCAPED_CURLY_BRACES = Pattern.compile("%7B(\\w+)%7D");
 
-    private void resolve(RequestTemplate mutable, Map<String, Object> variables) {
-        JaxrsUriTemplate uriTemplate = JaxrsUriTemplate.create(mutable.url(), !mutable.decodeSlash(),
+    private void resolve(RequestTemplate mutable, EncoderContext ctx) {
+        Map<String, Object> variables = ctx.values;
+        JaxrsUriTemplate uriTemplate = JaxrsUriTemplate.create(removeEmptyQueryParameters(mutable.url(), ctx), !mutable.decodeSlash(),
                 mutable.requestCharset());
 
         /// escape opening curly brace before expand
         variables.forEach((key, value) -> {
-            if (value instanceof String) {
-                String escapedValue = ((String) value).replace("{", "%7B");
+            if (value instanceof String valueString) {
+                String escapedValue = valueString.replace("{", "%7B");
                 variables.put(key, escapedValue);
             }
         });
@@ -83,5 +79,51 @@ class BeanParamEncoder implements Encoder {
         }
 
         mutable.uri(expanded);
+
+        /// expand headers
+        Map<String, Collection<String>> headers = mutable.headers();
+        mutable.headers(Collections.emptyMap());
+        for (Map.Entry<String, Collection<String>> header : headers.entrySet()) {
+            HeaderTemplate headerTemplate = HeaderTemplate.create(header.getKey(), header.getValue());
+            String expandedHeader = headerTemplate.expand(variables);
+            if (!expandedHeader.isEmpty())
+                mutable.header(headerTemplate.getName(), expandedHeader);
+            else
+                if (!isFromBeanParam(headerTemplate.getName(), ctx))
+                    mutable.header(headerTemplate.getName(), headerTemplate.getValues());
+        }
+    }
+
+    private static boolean isFromBeanParam(String paramName, EncoderContext ctx) {
+        for (String[] names : ctx.transformer.names)
+            for (String name : names)
+                if (name.equals(paramName))
+                    return true;
+
+        return false;
+    }
+
+    public static String removeEmptyQueryParameters(String template, EncoderContext ctx) {
+        Map<String, Object> variables = ctx.values;
+
+        // Регулярное выражение для поиска шаблонных переменных
+        Pattern pattern = Pattern.compile("\\{(\\w+)}");
+        Matcher matcher = pattern.matcher(template);
+
+        // В цикле перебираем все переменные в шаблоне
+        while (matcher.find()) {
+            String key = matcher.group(1); // Получаем имя переменной
+            Object value = variables.get(key); // Получаем значение переменной из Map
+
+            if (isFromBeanParam(key, ctx) && (value == null || String.valueOf(value).isEmpty())) {
+                // Если значение переменной пусто или не задано, удаляем из шаблона
+                template = template.replaceAll("[&]?" + key + "=\\{" + key + "}", "");
+            }
+        }
+
+        template = template.replace("?&", "?"); // Исправляем случай "?&" после удаления первого параметра
+        template = template.replaceAll("\\?$", ""); // Удаляем висячий "?" в конце, если все параметры были удалены
+
+        return template;
     }
 }
