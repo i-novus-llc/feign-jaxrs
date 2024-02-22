@@ -137,10 +137,9 @@ public class EncoderJAXRS3Contract extends AlwaysEncodeBodyContract {
         });
 
         registerParameterAnnotation(BeanParam.class, (param, data, paramIndex) -> {
-            final Field[] aggregatedParams = data.method()
+            final Field[] aggregatedParams = ReflectionUtil.getAllDeclaredFields(data.method()
                     .getParameters()[paramIndex]
-                    .getType()
-                    .getDeclaredFields();
+                    .getType(), true);
 
             for (Field aggregatedParam : aggregatedParams) {
 

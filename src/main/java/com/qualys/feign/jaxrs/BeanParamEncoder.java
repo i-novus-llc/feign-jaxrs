@@ -47,13 +47,14 @@ class BeanParamEncoder implements Encoder {
         if (template.methodMetadata().indexToExpander() == null)
             template.methodMetadata().indexToExpander(new HashMap<>());
 
-        if (object instanceof Object[] objects) {
+        if (object instanceof Object[] objects)
             for (Object internalObject : objects)
-                if (internalObject instanceof EncoderContext ctx)
+                if (internalObject instanceof EncoderContext ctx) {
                     resolve(template, ctx);
-        } else {
-            this.delegate.encode(object, bodyType, template);
-        }
+                    return;
+                }
+
+        this.delegate.encode(object, bodyType, template);
     }
 
     private static final Pattern ESCAPED_CURLY_BRACES = Pattern.compile("%7B(\\w+)%7D");
