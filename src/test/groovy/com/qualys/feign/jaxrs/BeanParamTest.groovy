@@ -102,7 +102,7 @@ class BeanParamTest extends Specification {
 
     def "mixed param"() {
         when:
-        client.withMixed(5, "one", "headerOne", new QueryResource.MixedBeanParam(id: 10, param: "two", header: "headerTwo"))
+        client.withMixed(5, "one", new QueryResource.MixedBeanParam(id: 10, param: "two", header: "headerTwo"), "headerOne")
 
         then:
         sent.url() == "http://localhost/path1/5/path2/10?param1=one&param2=two"
@@ -112,7 +112,7 @@ class BeanParamTest extends Specification {
 
     def "mixed param with special characters"() {
         when:
-        client.withMixed(5, "o{n}e", "heade{rOne}", new QueryResource.MixedBeanParam(id: 10, param: "t{w}o", header: "headerTwo"))
+        client.withMixed(5, "o{n}e", new QueryResource.MixedBeanParam(id: 10, param: "t{w}o", header: "headerTwo"), "heade{rOne}")
 
         then:
         sent.url() == "http://localhost/path1/5/path2/10?param1=o%7Bn%7De&param2=t%7Bw%7Do"
@@ -122,7 +122,7 @@ class BeanParamTest extends Specification {
 
     def "mixed param only path"() {
         when:
-        client.withMixed(5, null, null, new QueryResource.MixedBeanParam(id: 10))
+        client.withMixed(5, null, new QueryResource.MixedBeanParam(id: 10), null)
 
         then:
         sent.url() == "http://localhost/path1/5/path2/10"

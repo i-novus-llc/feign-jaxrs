@@ -24,6 +24,7 @@ import feign.codec.Encoder;
 import feign.template.*;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,14 +48,38 @@ class BeanParamEncoder implements Encoder {
         if (template.methodMetadata().indexToExpander() == null)
             template.methodMetadata().indexToExpander(new HashMap<>());
 
-        if (object instanceof Object[] objects)
-            for (Object internalObject : objects)
+        boolean resolved = false;
+        if (object instanceof Object[] objects) {
+            for (Object internalObject : objects) {
                 if (internalObject instanceof EncoderContext ctx) {
-                    resolve(template, ctx);
-                    return;
+                    if (ctx.values.size() == 1 && ctx.values.get(ctx.values.keySet().iterator().next()) instanceof Map<?,?> map) {
+                        encodeQueryMapParam(template, map, true);
+                    } else {
+                        resolve(template, ctx);
+                    }
+                    resolved = true;
                 }
+            }
+            if (!resolved) {
+                this.delegate.encode(objects[0], objects[0].getClass(), template);
+                if (!template.queries().isEmpty() && objects[0] instanceof Map<?,?> map) {
+                    encodeQueryMapParam(template, map, false);
+                }
+            }
+        }
+    }
 
-        this.delegate.encode(object, bodyType, template);
+    private void encodeQueryMapParam(RequestTemplate template, Map<?,?> params, boolean runEncoder) {
+        if (runEncoder)
+            this.delegate.encode(params, Map.class, template);
+
+        if (!template.queries().isEmpty()) {
+            String paramTemplateName = template.getRequestVariables().iterator().next();
+            Map<String, Object> contextValues = new HashMap<>();
+            contextValues.put(paramTemplateName, new String(template.body(), StandardCharsets.UTF_8));
+            resolve(template, new EncoderContext(0, null, contextValues));
+            template.body(null, null);
+        }
     }
 
     private static final Pattern ESCAPED_CURLY_BRACES = Pattern.compile("%7B(\\w+)%7D");
@@ -89,17 +114,17 @@ class BeanParamEncoder implements Encoder {
             String expandedHeader = headerTemplate.expand(variables);
             if (!expandedHeader.isEmpty())
                 mutable.header(headerTemplate.getName(), expandedHeader);
-            else
-                if (!isFromBeanParam(headerTemplate.getName(), ctx))
-                    mutable.header(headerTemplate.getName(), headerTemplate.getValues());
+            else if (!isFromBeanParam(headerTemplate.getName(), ctx))
+                mutable.header(headerTemplate.getName(), headerTemplate.getValues());
         }
     }
 
     private static boolean isFromBeanParam(String paramName, EncoderContext ctx) {
-        for (String[] names : ctx.transformer.names)
-            for (String name : names)
-                if (name.equals(paramName))
-                    return true;
+        if (ctx.transformer != null)
+            for (String[] names : ctx.transformer.names)
+                for (String name : names)
+                    if (name.equals(paramName))
+                        return true;
 
         return false;
     }

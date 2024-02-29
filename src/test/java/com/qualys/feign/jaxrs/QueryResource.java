@@ -20,22 +20,36 @@ package com.qualys.feign.jaxrs;
 
 import jakarta.ws.rs.*;
 
-import java.util.Map;
-
 /**
  * Created by sskrla on 10/12/15.
  */
 public interface QueryResource {
-    @GET String withParam(@BeanParam QueryParamBean bean);
-    @GET @Path("headers") String withHeader(@BeanParam HeaderBeanParam bean);
-    @GET @Path("{id1}/{id2}") String withPath(@BeanParam PathBeanParam path);
-    @GET @Path("path1/{id1}/path2/{id2}") String withMixed(@PathParam("id1") int id, @QueryParam("param1") String param,
-                                                           @HeaderParam("header1") String header, @BeanParam MixedBeanParam bean);
+    @GET
+    String withParam(@BeanParam QueryParamBean bean);
+
+    @GET
+    @Path("headers")
+    String withHeader(@BeanParam HeaderBeanParam bean);
+
+    @GET
+    @Path("{id1}/{id2}")
+    String withPath(@BeanParam PathBeanParam path);
+
+    @GET
+    @Path("path1/{id1}/path2/{id2}")
+    String withMixed(@PathParam("id1") int id, @QueryParam("param1") String param,
+                     @BeanParam MixedBeanParam bean, @HeaderParam("header1") String header);
+
+    @POST
+    void postModel(PostModelParam model);
 
     class QueryParamBean {
-        @QueryParam("one") String param1;
-        @QueryParam("two") String param2;
-        @QueryParam("three") String param3;
+        @QueryParam("one")
+        String param1;
+        @QueryParam("two")
+        String param2;
+        @QueryParam("three")
+        String param3;
 
         public String getParam1() {
             return param1;
@@ -63,9 +77,11 @@ public interface QueryResource {
     }
 
     class HeaderBeanParam {
-        @HeaderParam("test1") String testParam1;
+        @HeaderParam("test1")
+        String testParam1;
 
-        @HeaderParam("test2") String testParam2;
+        @HeaderParam("test2")
+        String testParam2;
 
         public String getTestParam1() {
             return testParam1;
@@ -85,9 +101,11 @@ public interface QueryResource {
     }
 
     class PathBeanParam {
-        @PathParam("id1") int id1;
+        @PathParam("id1")
+        int id1;
 
-        @PathParam("id2") int id2;
+        @PathParam("id2")
+        int id2;
 
         public int getId1() {
             return id1;
@@ -107,9 +125,12 @@ public interface QueryResource {
     }
 
     class MixedBeanParam {
-        @PathParam("id2") int id;
-        @QueryParam("param2") String param;
-        @HeaderParam("header2") String header;
+        @PathParam("id2")
+        int id;
+        @QueryParam("param2")
+        String param;
+        @HeaderParam("header2")
+        String header;
 
         public int getId() {
             return id;
@@ -133,6 +154,34 @@ public interface QueryResource {
 
         public void setHeader(String header) {
             this.header = header;
+        }
+    }
+
+    class PostModelParam {
+        private Long id;
+        private String name;
+
+        public PostModelParam() {
+        }
+
+        public PostModelParam(Long id) {
+            this.id = id;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
     }
 }
