@@ -49,7 +49,7 @@ class BeanParamEncoder implements Encoder {
             template.methodMetadata().indexToExpander(new HashMap<>());
 
         boolean resolved = false;
-        if (object instanceof Object[] objects) {
+        if (object instanceof Object[] objects && objects.length > 0) {
             for (Object internalObject : objects) {
                 if (internalObject instanceof EncoderContext ctx) {
                     if (ctx.values.size() == 1 && ctx.values.get(ctx.values.keySet().iterator().next()) instanceof Map<?,?> map) {
