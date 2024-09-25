@@ -36,6 +36,10 @@ public interface QueryResource {
     String withPath(@BeanParam PathBeanParam path);
 
     @GET
+    @Path("{id}")
+    String withPathString(@PathParam("id") String id);
+
+    @GET
     @Path("path1/{id1}/path2/{id2}")
     String withMixed(@PathParam("id1") int id, @QueryParam("param1") String param,
                      @BeanParam MixedBeanParam bean, @HeaderParam("header1") String header);

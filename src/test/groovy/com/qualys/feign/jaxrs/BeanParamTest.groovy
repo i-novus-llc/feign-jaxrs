@@ -110,6 +110,15 @@ class BeanParamTest extends Specification {
         sent.headers().get("header2")[0] == ("headerTwo")
     }
 
+    def "path param string"() {
+        when:
+        client.withPathString("test")
+
+        then:
+        sent.url() == "http://localhost/test"
+        sent.body() == null
+    }
+
     def "mixed param with special characters"() {
         when:
         client.withMixed(5, "o{n}e", new QueryResource.MixedBeanParam(id: 10, param: "t{w}o", header: "headerTwo"), "heade{rOne}")
