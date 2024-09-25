@@ -22,7 +22,9 @@ import feign.RequestTemplate;
 import feign.codec.EncodeException;
 import feign.codec.Encoder;
 import feign.template.*;
+import jakarta.ws.rs.PathParam;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -50,7 +52,10 @@ class BeanParamEncoder implements Encoder {
 
         boolean resolved = false;
         if (object instanceof Object[] objects && objects.length > 0) {
-            for (Object internalObject : objects) {
+            Object[] withoutPathParam = withoutPathParam(objects, template);
+            if (withoutPathParam.length < 1)
+                return;
+            for (Object internalObject : withoutPathParam) {
                 if (internalObject instanceof EncoderContext ctx) {
                     if (ctx.values.size() == 1 && ctx.values.get(ctx.values.keySet().iterator().next()) instanceof Map<?,?> map) {
                         encodeQueryMapParam(template, map, true);
@@ -61,12 +66,27 @@ class BeanParamEncoder implements Encoder {
                 }
             }
             if (!resolved) {
-                this.delegate.encode(objects[0], objects[0].getClass(), template);
-                if (!template.queries().isEmpty() && objects[0] instanceof Map<?,?> map) {
+                if (withoutPathParam[0] != null)
+                    this.delegate.encode(withoutPathParam[0], withoutPathParam[0].getClass(), template);
+                if (!template.queries().isEmpty() && withoutPathParam[0] instanceof Map<?,?> map) {
                     encodeQueryMapParam(template, map, false);
                 }
             }
         }
+    }
+
+    private Object[] withoutPathParam(Object[] objects, RequestTemplate template) {
+        List<Object> noPathParam = new ArrayList<>();
+        List<List<Annotation>> parameterAnnotations = new ArrayList<>();
+
+        for (Annotation[] annotations : template.methodMetadata().method().getParameterAnnotations())
+            parameterAnnotations.add(Arrays.asList(annotations));
+        
+        for (int i = 0; i < objects.length; i++)
+            if (parameterAnnotations.get(i).stream().noneMatch(PathParam.class::isInstance))
+                noPathParam.add(objects[i]);
+
+        return noPathParam.toArray(new Object[0]);
     }
 
     private void encodeQueryMapParam(RequestTemplate template, Map<?,?> params, boolean runEncoder) {
