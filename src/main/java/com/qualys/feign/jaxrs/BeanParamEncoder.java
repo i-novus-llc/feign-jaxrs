@@ -106,6 +106,12 @@ class BeanParamEncoder implements Encoder {
 
     private void resolve(RequestTemplate mutable, EncoderContext ctx) {
         Map<String, Object> variables = ctx.values;
+
+        for (String name : ctx.transformer.queryParams()) {
+            if (!mutable.queries().containsKey(name))
+                mutable.query(name, "{" + name + "}");
+        }
+
         JaxrsUriTemplate uriTemplate = JaxrsUriTemplate.create(removeEmptyQueryParameters(mutable.url(), ctx), !mutable.decodeSlash(),
                 mutable.requestCharset());
 
