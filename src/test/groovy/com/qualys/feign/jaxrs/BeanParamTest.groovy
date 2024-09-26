@@ -48,6 +48,14 @@ class BeanParamTest extends Specification {
         sent.url() == "http://localhost/?one=one&two=two&three=three"
     }
 
+    def "query params by overridden setters"() {
+        when:
+        client.withExtendParam(new QueryResource.ExtendedSetterQueryParamBean(param1: "one", param2: "two", param3: "three"))
+
+        then:
+        sent.url() == "http://localhost/?one=one&two=two&three=three"
+    }
+
     def "last null query param not sent"() {
         when:
         client.withParam(new QueryResource.QueryParamBean(param1: "one"))
