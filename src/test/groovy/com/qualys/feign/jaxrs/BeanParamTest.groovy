@@ -21,6 +21,8 @@ import feign.Client
 import feign.Feign
 import feign.Request
 import feign.Response
+import feign.jackson.JacksonDecoder
+import feign.jackson.JacksonEncoder
 import spock.lang.Specification
 /**
  * Created by sskrla on 10/12/15.
@@ -28,7 +30,8 @@ import spock.lang.Specification
 class BeanParamTest extends Specification {
     Request sent
     def client = Feign.builder()
-            .encoder(new BeanParamEncoder())
+            .encoder(new BeanParamEncoder(new JacksonEncoder()))
+            .decoder(new JacksonDecoder())
             .invocationHandlerFactory(new BeanParamInvocationHandlerFactory())
             .contract(new EncoderJAXRS3Contract())
             .client(new Client() {
@@ -88,6 +91,14 @@ class BeanParamTest extends Specification {
         sent.url() == "http://localhost/headers"
         sent.headers().get("test1")[0] == "ing"
         sent.headers().get("test2")[0] == "ing2"
+    }
+
+    def "map query param"() {
+        when:
+        client.mapQueryParam(Map.of("testParam1", "ing", "testParam2", "ing2"))
+
+        then:
+        sent.url() == "http://localhost/mapQueryParam?map=%7B%0D%0A%20%20%22testParam2%22%20%3A%20%22ing2%22%2C%0D%0A%20%20%22testParam1%22%20%3A%20%22ing%22%0D%0A%7D"
     }
 
     def "first null header param not sent"() {
