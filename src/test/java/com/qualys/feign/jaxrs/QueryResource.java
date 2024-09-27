@@ -20,6 +20,8 @@ package com.qualys.feign.jaxrs;
 
 import jakarta.ws.rs.*;
 
+import java.util.Map;
+
 /**
  * Created by sskrla on 10/12/15.
  */
@@ -46,6 +48,10 @@ public interface QueryResource {
     @Path("path1/{id1}/path2/{id2}")
     String withMixed(@PathParam("id1") int id, @QueryParam("param1") String param,
                      @BeanParam MixedBeanParam bean, @HeaderParam("header1") String header);
+
+    @GET
+    @Path("/mapQueryParam")
+    Map<String, String> mapQueryParam(@QueryParam("map") Map<String, String> map);
 
     @POST
     void postModel(PostModelParam model);
