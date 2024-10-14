@@ -98,7 +98,10 @@ class BeanParamTest extends Specification {
         client.mapQueryParam(Map.of("testParam1", "ing", "testParam2", "ing2"))
 
         then:
-        sent.url() == "http://localhost/mapQueryParam?map=%7B%0D%0A%20%20%22testParam2%22%20%3A%20%22ing2%22%2C%0D%0A%20%20%22testParam1%22%20%3A%20%22ing%22%0D%0A%7D"
+        URLDecoder.decode(sent.url(), "UTF-8") == "http://localhost/mapQueryParam?map={\n" +
+                "  \"testParam1\" : \"ing\",\n" +
+                "  \"testParam2\" : \"ing2\"\n" +
+                "}"
     }
 
     def "first null header param not sent"() {
@@ -121,10 +124,10 @@ class BeanParamTest extends Specification {
 
     def "mixed param"() {
         when:
-        client.withMixed(5, "one", new QueryResource.MixedBeanParam(id: 10, param: "two", header: "headerTwo"), "headerOne")
+        client.withMixed(5, "one", "three", new QueryResource.MixedBeanParam(id: 10, param: "two", header: "headerTwo"), "headerOne")
 
         then:
-        sent.url() == "http://localhost/path1/5/path2/10?param1=one&param2=two"
+        sent.url() == "http://localhost/path1/5/path2/10?param1=one&param3=three&param2=two"
         sent.headers().get("header1")[0] == ("headerOne")
         sent.headers().get("header2")[0] == ("headerTwo")
     }
@@ -138,19 +141,37 @@ class BeanParamTest extends Specification {
         sent.body() == null
     }
 
-    def "mixed param with special characters"() {
+    def "single query param string"() {
         when:
-        client.withMixed(5, "o{n}e", new QueryResource.MixedBeanParam(id: 10, param: "t{w}o", header: "headerTwo"), "heade{rOne}")
+        client.testQueryString("test")
 
         then:
-        sent.url() == "http://localhost/path1/5/path2/10?param1=o%7Bn%7De&param2=t%7Bw%7Do"
+        sent.url() == "http://localhost/path1?param1=test"
+        sent.body() == null
+    }
+
+    def "post"() {
+        when:
+        client.postModel(new QueryResource.PostModelParam(id: 1, name: "test"))
+
+        then:
+        sent.url() == "http://localhost"
+        sent.body() != null
+    }
+
+    def "mixed param with special characters"() {
+        when:
+        client.withMixed(5, "o{n}e", "t{h}ree", new QueryResource.MixedBeanParam(id: 10, param: "t{w}o", header: "headerTwo"), "heade{rOne}")
+
+        then:
+        URLDecoder.decode(sent.url(), "UTF-8") == "http://localhost/path1/5/path2/10?param1=o{n}e&param3=t{h}ree&param2=t{w}o"
         sent.headers().get("header1")[0] == ("heade{rOne}")
         sent.headers().get("header2")[0] == ("headerTwo") /// headers in BeanParam doesn't support values with curly braces
     }
 
     def "mixed param only path"() {
         when:
-        client.withMixed(5, null, new QueryResource.MixedBeanParam(id: 10), null)
+        client.withMixed(5, null, null, new QueryResource.MixedBeanParam(id: 10), null)
 
         then:
         sent.url() == "http://localhost/path1/5/path2/10"

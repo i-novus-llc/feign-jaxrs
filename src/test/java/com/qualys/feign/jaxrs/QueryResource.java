@@ -45,8 +45,12 @@ public interface QueryResource {
     String withPathString(@PathParam("id") String id);
 
     @GET
+    @Path("/path1")
+    String testQueryString(@QueryParam("param1") String param);
+
+    @GET
     @Path("path1/{id1}/path2/{id2}")
-    String withMixed(@PathParam("id1") int id, @QueryParam("param1") String param,
+    String withMixed(@PathParam("id1") int id, @QueryParam("param1") String param, @QueryParam("param3") String param3,
                      @BeanParam MixedBeanParam bean, @HeaderParam("header1") String header);
 
     @GET
@@ -124,10 +128,12 @@ public interface QueryResource {
         public void setParam1(String param1) {
             this.param1 = param1;
         }
+
         @QueryParam("two")
         public void setParam2(String param2) {
             this.param2 = param2;
         }
+
         @QueryParam("three")
         public void setParam3(String param3) {
             this.param3 = param3;
